@@ -1,0 +1,3 @@
+Manually send mail to many JNVs for confirmation of if inspire can be conducted and if it can be when it can be conducted.
+Soloution : Just select JNV names it will automatically send mails and keep track of previous inspire session.
+Difficult to keep track whether some one has replied to mail or not within some time say 2-3 days

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Inspire</title>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+	<style type="text/css">
+		.preview_mail_div{
+			border: 2px solid green;
+			margin: 3px;
+		}
+		textarea[name='message_body']{
+			/*height: 200px;*/
+		}
+		.confirm_step1_form{
+			display: none;
+		}
+		.confirm_step2_form{
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<div id='select_jnv'>
+	<select id="jnv_names" name="jnv_names" multiple>
+		<option value="0">Select JNV</option>
+	</select>
+	<input type="text" name="inspire_date" id="inspire_date">
+	<button id="preview">Preview</button>
+	<button id="sendMail">Send Mail</button>
+	</div>
+	<div id="currentInspire">
+		
+	</div>
+	<div id="preview_div" style="border: 2px solid red; position: absolute; top: 10px; right: 10px;"></div>
+
+	<div id="select_volunteer_list">
+		<select id="volunteers_name" name="volunteers_name" multiple>
+			<option value="0">Select Volunteer</option>
+		</select>
+		<button id="previewVolunteerMail">Preview</button>
+		<button id="sendVolunteerMail">Send Mail</button>
+	</div>
+</body>
+<script type="text/javascript">
+function validation_addInspire(){
+	var listOfJnvs = $("#jnv_names").val();
+	for (var i = listOfJnvs.length - 1; i >= 0; i--) {
+		if(listOfJnvs[i] == 0){
+			alert("Deselect Select JNV");
+			return 0;
+		}
+	};
+	return 1;
+	
+}
+function validation_checkDate(){
+	var date = $("#inspire_date").val();
+	if(!date){
+		alert("select Date");
+		return 0;
+	}
+	return 1;
+}
+function basic(){
+	$(".preview_mail").on('submit',function(e){
+		var form = $(this);
+		var to_mail = form.find("input[name='to_mail']").val();
+		var from_mail = form.find("input[name='from_mail']").val();
+		var message_subject = form.find("input[name='message_subject']").val();
+		var message_body = form.find("textarea[name='message_body']").val();
+		var jnv_id = form.find("input[name='jnv_id']").val();
+		var inspire_date = form.find("input[name='inspire_date']").val();
+
+		$.ajax({
+			url : "/sendPreviewedMail",
+			data : {to_mail : to_mail,from_mail : from_mail , message_body : message_body ,
+				message_subject : message_subject,jnv_id : jnv_id, inspire_date : inspire_date},
+			success : function(response){
+				$("#result").html(response);
+			}
+		});
+		e.preventDefault();
+	});
+}
+function confirm_step1(){
+	$(".inspire_date_step1").datepicker({dateFormat: 'yy-mm-dd'});
+	$(".confirm_step1_button").click(function(){
+		$(this).siblings(".confirm_step1_form").slideToggle();
+	});
+	$(".confirm_step1_form").submit(function(e){
+		e.preventDefault();
+		var form = $(this);
+		var inspire_id = form.find("input[name='inspire_id']").val();
+		var inspire_date = form.find("input[name='inspire_date_step1']").val();
+		var comment = form.find("textarea[name='comment']").val();
+		if(!inspire_date || inspire_date == 'None'){
+			alert("Enter inspire date");
+			return ;
+		}
+		$.ajax({
+			url : "/confirm_step1",
+			data : {inspire_id : inspire_id, inspire_date : inspire_date, comment : comment},
+			success : function(response){
+				alert(response);
+			}
+		});
+	});
+}
+function confirm_step2(){
+	$(".inspire_date_step2").datepicker({dateFormat: 'yy-mm-dd'});
+	$(".confirm_step2_button").click(function(){
+		$(this).siblings(".confirm_step2_form").slideToggle();
+	});
+	$(".confirm_step2_form").submit(function(e){
+		e.preventDefault();
+		var form = $(this);
+		var inspire_id = form.find("input[name='inspire_id']").val();
+		var inspire_date = form.find("input[name='inspire_date_step2']").val();
+		var comment = form.find("textarea[name='comment']").val();
+		if(!inspire_date || inspire_date == 'None'){
+			alert("Enter inspire date");
+			return ;
+		}
+	});
+	$(".select_volunteer").click(function(e){
+		e.preventDefault();
+		$("#select_volunteer_list").insertAfter($(this));
+	});
+}
+$(document).ready(function(){
+	$( "#inspire_date" ).datepicker({dateFormat: 'yy-mm-dd'});
+	$.ajax({
+		url : "/getJnvNames",
+		success : function(response){
+			$("#jnv_names").append(response);
+		}
+	});
+	$.ajax({
+		url : "/currentInspire",
+		success : function(response){
+			$("#currentInspire").append(response);
+			confirm_step1();
+			confirm_step2();
+		}
+	});
+	$.ajax({
+		url : "/getVolunteers",
+		success : function(response){
+			$("#volunteers_name").append(response);
+		}
+	});
+	$("#sendMail").click(function(){
+		if(validation_addInspire() == 0){
+			return ;
+		}
+		var tempjnvs = $("#jnv_names").val();
+		jnvs = tempjnvs.join(", ")
+		var inspire_date = $("#inspire_date").val();
+		$.ajax({
+			url : "/sendMail",
+			data : {jnvs:jnvs,inspire_date:inspire_date},
+			success : function (response) {
+				$("#response").html(response);
+			}
+		});
+	});
+	$("#preview").click(function(){
+		if(validation_addInspire() == 0){
+			return;
+		}
+		if(validation_checkDate() == 0){
+			return;
+		}
+		var tempjnvs = $("#jnv_names").val();
+		jnvs = tempjnvs.join(", ");
+		var inspire_date = $("#inspire_date").val();
+		$.ajax({
+			url : "/preview",
+			data : {jnvs:jnvs,inspire_date:inspire_date},
+			success : function (response) {
+				$("#preview_div").html(response);
+				basic();
+			}
+		});
+	});
+	$("#previewVolunteerMail").click(function(){
+		var tempVolunteers = $("#volunteers_name").val();
+		var volunteers = tempVolunteers.join(", ");
+		var inspire_id = $(this).parent().siblings(".select_volunteer").attr('id');
+		
+		$.ajax({
+			url : "/previewVolunteerMail",
+			data : {volunteers : volunteers,inspire_id:inspire_id},
+			success : function(response){
+				$("#preview_div").html(response);
+			}
+		}); 
+	});
+
+});
+
+</script>
+</html>
